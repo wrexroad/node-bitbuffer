@@ -9,6 +9,7 @@ function BitBuffer() {
 	var buff = construct.call(null, arguments[0], arguments[1])
 	this.length = buff.length
 	this.buffer = buff.buffer
+	this.startBit = 0
 }
 
 //reading values requires us to know which order the
@@ -131,6 +132,7 @@ BitBuffer.isEncoding = function(enc) {
 
 BitBuffer.prototype = {
 	set: function(index, bool) {
+		index += this.startBit
 		var pos = index >>> 3
 		if(bool) {
 			this.buffer[pos] |= 1 << (index % 8)
@@ -139,9 +141,11 @@ BitBuffer.prototype = {
 		}
 	},
 	get: function(index) {
+		index += this.startBit
 		return (this.buffer[index >>> 3] & (1 << (index % 8))) != 0
 	},
 	toggle: function(index) {
+		index += this.startBit
 		this.buffer[index >>> 3] ^= 1 << (index % 8)
 	},
 	toBuffer: function() {
@@ -152,8 +156,8 @@ BitBuffer.prototype = {
 		var newbuff, size 
 		
 		//make sure begin and end are valid
-		begin = +begin || 0
-		end = isFinite(+end) ? end : this.length
+		begin = +begin || this.startBit
+		end = isFinite(+end) ? end : this.startBit + this.length
 		
 		//negative values are read from the end of the buffer
 		begin = begin >= 0 ? begin : this.length + begin
@@ -174,8 +178,8 @@ BitBuffer.prototype = {
 	
 	copy: function(destBuff, destStart, srcStart, srcEnd) {
 		destStart = +destStart || 0
-		srcStart = +srcStart || 0
-		srcEnd = isFinite(+srcEnd) ? srcEnd : this.length
+		srcStart = +srcStart || this.startBit
+		srcEnd = isFinite(+srcEnd) ? srcEnd : this.startBit + this.length
 		var length = srcEnd - srcStart
 		
 		if (srcEnd > this.length) {
@@ -229,15 +233,15 @@ BitBuffer.prototype = {
 	},
 	
 	toBitArray: function(bitOrder) {
-		var size = this.length, maxBit = size - 1, bitarr = []
+		var maxBit = this.length + this.startBit, bitarr = [], bit_i
 		
 		if (bitOrder < 0) {
 			//bitOrder can be set to a negative number to reverse the bit array
-			for (var bit_i = 0; bit_i < size; bit_i++) {
-				bitarr[maxBit - bit_i] = +!!this.get(bit_i)
+			for (bit_i = this.startBit; bit_i < maxBit; bit_i++) {
+				bitarr[maxBit - bit_i - 1] = +!!this.get(bit_i)
 			}
 		} else {
-			for (var bit_i = 0; bit_i < size; bit_i++) {
+			for (bit_i = this.startBit; bit_i < maxBit; bit_i++) {
 				bitarr[bit_i] = +!!this.get(bit_i)
 			}
 		}
@@ -358,7 +362,7 @@ BitBuffer.prototype = {
 		readWidth =
 			!(+readWidth > 0) ? typeWidth :
 				readWidth < typeWidth ? readWidth : typeWidth
-		offset = +offset || 0
+		offset = (+offset || 0) + this.startBit
 		
 		//create new buffer that matches the width we are going to read as a number
 		buff = new BitBuffer(typeWidth)
