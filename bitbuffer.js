@@ -260,11 +260,11 @@ BitBuffer.prototype = {
 	toHexString: function() {
 		var
 			bits = this.toBitArray(),
-			length = bits.length,
+			maxBit = this.startBit + bits.length,
 			hexarr = [],
-			byteVal, bit_i, byte_i;
+			byteVal, bit_i;
 		
-		for (bit_i = 0, byte_i = 0; bit_i < length; bit_i += 8, byte_i++) {
+		for (bit_i = this.startBit; bit_i < maxBit; bit_i += 8) {
 			byteVal = 0
 			byteVal |= +!!bits[bit_i]
 			byteVal |= +!!bits[bit_i + 1] << 1
@@ -274,7 +274,7 @@ BitBuffer.prototype = {
 			byteVal |= +!!bits[bit_i + 5] << 5
 			byteVal |= +!!bits[bit_i + 6] << 6
 			byteVal |= +!!bits[bit_i + 7] << 7
-			hexarr[byte_i] = byteVal.toString(16)
+			hexarr.unshift(byteVal.toString(16))
 		}
 		
 		return hexarr.join("")
