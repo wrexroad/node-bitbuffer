@@ -233,19 +233,17 @@ BitBuffer.prototype = {
 	},
 	
 		toBitArray: function(bitOrder) {
-		var maxBit = this.length + this.startBit, bitarr = [], bit_i
-		
+		var bitarr = [], bit_i
 		if (bitOrder < 0) {
 			//bitOrder can be set to a negative number to reverse the bit array
-			for (bit_i = this.startBit; bit_i < maxBit; bit_i++) {
+			for (bit_i = 0; bit_i < this.length; bit_i++) {
 				bitarr.unshift(+!!this.get(bit_i))
 			}
 		} else {
-			for (bit_i = this.startBit; bit_i < maxBit; bit_i++) {
+			for (bit_i = 0; bit_i < this.length; bit_i++) {
 				bitarr.push(+!!this.get(bit_i))
 			}
 		}
-		
 		return bitarr
 	},
 	
