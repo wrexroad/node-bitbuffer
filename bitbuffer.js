@@ -262,16 +262,12 @@ BitBuffer.prototype = {
 			hexarr = [],
 			byteVal, bit_i;
 		
-		for (bit_i = this.startBit; bit_i < maxBit; bit_i += 8) {
+		for (bit_i = this.startBit; bit_i < maxBit; bit_i += 4) {
 			byteVal = 0
 			byteVal |= +!!bits[bit_i]
 			byteVal |= +!!bits[bit_i + 1] << 1
 			byteVal |= +!!bits[bit_i + 2] << 2
 			byteVal |= +!!bits[bit_i + 3] << 3
-			byteVal |= +!!bits[bit_i + 4] << 4
-			byteVal |= +!!bits[bit_i + 5] << 5
-			byteVal |= +!!bits[bit_i + 6] << 6
-			byteVal |= +!!bits[bit_i + 7] << 7
 			hexarr.unshift(byteVal.toString(16))
 		}
 		
