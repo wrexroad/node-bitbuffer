@@ -196,43 +196,64 @@ BitBuffer.prototype = {
 	},
 	
 	shiftRight: function(shiftBits) {
+		var shiftBytes, buf, maxBit, startByte, endByte
+		
 		if (shiftBits < 0) {
 			return this.shiftLeft(-shiftBits)
 		}
+		shiftBytes = shiftBits / 8 >> 0
 		
-		var bitarr = this.toBitArray()
+		//shift right by adjusting the startBit property left 
+		this.startBit += shiftBits
 		
-		while (shiftBits--) {
-			//shift the bits off the "front" of the array
-			//array index 0 is at the front
-			bitarr.shift()
-			bitarr.push(0)
+		//figure out how many bits were "shifted" in
+		maxBit = this.startBit + this.length
+		
+		//mask off the bits we shifted out on the low side
+		this.buffer[shiftBytes] &= ~(Math.pow(2, (shiftBits % 8)) - 1)
+		
+		//Check if the shifting pushed us over the end of the Buffer
+		if (maxBit > this.buffer.length << 3) {
+			startByte = (this.startBit / 8) >> 0
+			endByte = Math.ceil(maxBit / 8)
+			buf = new Buffer(endByte - startByte)
+			buf.fill(0)
+			
+			this.buffer.copy(buf, 0, startByte, this.buffer.length)
+			this.buffer = buf
+			this.startBit %= 8
 		}
-		
-		this.buffer = BitBuffer.fromBitArray(bitarr).buffer
 		
 		return this
 	},
 	shiftLeft: function(shiftBits) {
+		var newBytes, shiftBytes, buf, maxBit, startByte, endByte
+		
 		if (shiftBits < 0) {
 			return this.shiftRight(-shiftBits)
 		}
 		
-		var bitarr = this.toBitArray()
+		//shift left by adjusting the startBit property right 
+		this.startBit -= shiftBits
+		endByte = Math.ceil((this.length + this.startBit) / 8)
+	
+	  //mask the high byte to zero out the bits shifted off
+		this.buffer[endByte - 1] &= ~(Math.pow(2, shiftBits % 8) - 1)
 		
-		while (shiftBits--) {
-			//unshift empty bits onto the front of the array
-			//and pop the extra bit off the end
-			bitarr.unshift(0)
-			bitarr.pop()
+		if (this.startBit < 0) {
+			//we need to add more bytes on the low end of the BitBuffer
+			newBytes = Math.ceil(-this.startBit / 8)
+			buf = new Buffer(endByte + newBytes)
+			buf.fill(0)
+			this.buffer.copy(buf, newBytes, 0, this.buffer.length)
+			this.buffer = buf
+			this.startBit += (8 * newBytes) 
 		}
-		
-		this.buffer = BitBuffer.fromBitArray(bitarr).buffer
 		
 		return this
 	},
 	
-		toBitArray: function(bitOrder) {
+	toBitArray: function(bitOrder) {
 		var bitarr = [], bit_i
 		if (bitOrder < 0) {
 			//bitOrder can be set to a negative number to reverse the bit array
@@ -258,11 +279,10 @@ BitBuffer.prototype = {
 	toHexString: function() {
 		var
 			bits = this.toBitArray(),
-			maxBit = this.startBit + bits.length,
 			hexarr = [],
 			byteVal, bit_i;
 		
-		for (bit_i = this.startBit; bit_i < maxBit; bit_i += 4) {
+		for (bit_i = 0; bit_i < bits.length; bit_i += 4) {
 			byteVal = 0
 			byteVal |= +!!bits[bit_i]
 			byteVal |= +!!bits[bit_i + 1] << 1
