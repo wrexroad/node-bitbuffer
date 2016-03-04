@@ -232,17 +232,17 @@ BitBuffer.prototype = {
 		return this
 	},
 	
-	toBitArray: function(bitOrder) {
+		toBitArray: function(bitOrder) {
 		var maxBit = this.length + this.startBit, bitarr = [], bit_i
 		
 		if (bitOrder < 0) {
 			//bitOrder can be set to a negative number to reverse the bit array
 			for (bit_i = this.startBit; bit_i < maxBit; bit_i++) {
-				bitarr[maxBit - bit_i - 1] = +!!this.get(bit_i)
+				bitarr.unshift(+!!this.get(bit_i))
 			}
 		} else {
 			for (bit_i = this.startBit; bit_i < maxBit; bit_i++) {
-				bitarr[bit_i] = +!!this.get(bit_i)
+				bitarr.push(+!!this.get(bit_i))
 			}
 		}
 		
