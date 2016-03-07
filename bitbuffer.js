@@ -227,27 +227,33 @@ BitBuffer.prototype = {
 		return this
 	},
 	shiftLeft: function(shiftBits) {
-		var newBytes, shiftBytes, buf, maxBit, startByte, endByte
+		var newBytes, buf, maxBit, endByte, maskByte
 		
 		if (shiftBits < 0) {
 			return this.shiftRight(-shiftBits)
 		}
 		
-		//shift left by adjusting the startBit property right 
-		this.startBit -= shiftBits
-		endByte = Math.ceil((this.length + this.startBit) / 8)
-	
-	  //mask the high byte to zero out the bits shifted off
-		this.buffer[endByte - 1] &= ~(Math.pow(2, shiftBits % 8) - 1)
+		//figure out which byte the highest bit is currently in
+		maxBit = this.startBit + this.length
+		maskByte = (maxBit) / 8 >> 0
 		
+		//mask the bits that are going to be shifted out
+		this.buffer[maskByte] =
+			this.buffer[maskByte] & (Math.pow(2, ((maxBit - shiftBits) % 8)) - 1)
+		
+		//shift the BitBuffer left by adjusting the startBit property right 
+		this.startBit -= shiftBits
+		
+		//if the start bit has been pushed before the begining of the BitBuffer,
+		//add a byte
 		if (this.startBit < 0) {
-			//we need to add more bytes on the low end of the BitBuffer
+			endByte = Math.ceil((this.length + this.startBit) / 8)
 			newBytes = Math.ceil(-this.startBit / 8)
 			buf = new Buffer(endByte + newBytes)
 			buf.fill(0)
 			this.buffer.copy(buf, newBytes, 0, this.buffer.length)
 			this.buffer = buf
-			this.startBit += (8 * newBytes) 
+			this.startBit += (8 * newBytes)
 		}
 		
 		return this
