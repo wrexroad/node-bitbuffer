@@ -195,7 +195,7 @@ BitBuffer.prototype = {
 		return length
 	},
 	
-	shiftRight: function(shiftBits) {
+	/*shiftRight: function(shiftBits) {
 		var shiftBytes, buf, maxBit, startByte, endByte
 		
 		if (shiftBits < 0) {
@@ -222,6 +222,38 @@ BitBuffer.prototype = {
 			this.buffer.copy(buf, 0, startByte, this.buffer.length)
 			this.buffer = buf
 			this.startBit %= 8
+		}
+		
+		return this
+	},*/
+	shiftRight: function(shiftBits) {
+		var buf, startByte, endByte, maskByte
+		
+		if (shiftBits < 0) {
+			return this.shiftLeft(-shiftBits)
+		}
+		
+		//figure out which byte the lowest bit is currently in
+		maskByte = (this.startBit / 8) >> 0
+		
+		
+		//shift the BitBuffer right by adjusting the startBit property left 
+		this.startBit += shiftBits
+		
+		//mask the bits that were just shifted out
+		this.buffer[maskByte] =
+			this.buffer[maskByte] & ~(Math.pow(2, (this.startBit) % 8) - 1)		
+		
+		//if the start bit has been pushed past the end of the BitBuffer,
+		//add a byte
+		endByte = Math.ceil((this.length + this.startBit) / 8)
+		startByte = ((this.startBit / 8) >> 0)
+		if (endByte > this.buffer.length) {
+			buf = new Buffer(endByte - startByte)
+			buf.fill(0)
+			this.buffer.copy(buf, 0, startByte, this.buffer.length)
+			this.buffer = buf
+			this.startBit -= (8 * startByte)
 		}
 		
 		return this
